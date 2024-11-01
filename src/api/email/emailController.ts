@@ -15,7 +15,7 @@ class EmailController {
       const resend = new Resend(process.env.RESEND_API_KEY);
 
       const response = await resend.emails.send({
-        from: "Clarifyme.ai <support@tanjilrahman.dev>",
+        from: "Clarifyme.ai <support@clarifyme.ai>",
         to: appointmentInfo.candidateEmail,
         subject: `Appointment for ${appointmentInfo.jobTitle}`,
         react: AppointmentEmail(appointmentInfo),
@@ -47,7 +47,7 @@ class EmailController {
       const resend = new Resend(process.env.RESEND_API_KEY);
 
       const response = await resend.emails.send({
-        from: "Clarifyme.ai <support@tanjilrahman.dev>",
+        from: "Clarifyme.ai <support@clarifyme.ai>",
         to: confirmAppointmentInfo.candidateEmail,
         bcc: confirmAppointmentInfo.recruiterEmail,
         subject: `Appointment scheduled for ${confirmAppointmentInfo.topic}`,

@@ -61,7 +61,7 @@ class MeetingController {
       await saveTokens(recruiterId, access_token, refresh_token);
 
       // Send a response to the user (you can redirect or send a message)
-      res.redirect(`${process.env.DASHBOARD_URL}/interviews`);
+      res.redirect(`${process.env.CORS_ORIGIN}/interviews`);
     } catch (error) {
       console.error("Error obtaining token:", error);
       res.status(500).send("Error obtaining token");
