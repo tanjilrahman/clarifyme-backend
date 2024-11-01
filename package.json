@@ -67,5 +67,8 @@
     "splitting": false,
     "sourcemap": true,
     "clean": true
-  }
+  },
+  "resolutions": {
+ "rollup": "npm:@rollup/wasm-node@*"
+}
 }
