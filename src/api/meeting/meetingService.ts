@@ -16,10 +16,10 @@ export interface Meeting {
   agenda: string;
 }
 
-// Create a meeting
-async function createMeeting(meeting: Meeting): Promise<any> {
-  const tokens = await getTokens(meeting.recruiterId);
-  if (!tokens) return console.error("No valid tokens found.");
+// Create a zoom meeting
+async function createZoomMeeting(meeting: Meeting): Promise<any> {
+  const tokens = await getTokens(meeting.recruiterId, "zoomTokens");
+  if (!tokens) return ServiceResponse.failure("No valid tokens found.", null);
 
   try {
     const response = await axios.post(
@@ -53,7 +53,72 @@ async function createMeeting(meeting: Meeting): Promise<any> {
   } catch (error: any) {
     if (error.response && error.response.status === 401) {
       console.log("Access token expired. Refreshing token...");
-      await refreshAndRetryMeeting(meeting);
+      await refreshAndRetryZoomMeeting(meeting);
+    } else {
+      console.error("Error creating meeting:", error);
+      return ServiceResponse.failure(
+        "Failed to create meeting",
+        error.response?.data?.message || "An unknown error occurred",
+      );
+    }
+  }
+}
+
+// Create a teams meeting
+async function createTeamsMeeting(meeting: Meeting): Promise<any> {
+  const tokens = await getTokens(meeting.recruiterId, "teamsTokens");
+  if (!tokens) return ServiceResponse.failure("No valid tokens found.", null);
+
+  try {
+    const start_time = new Date(meeting.start_time);
+    start_time.setMinutes(start_time.getMinutes() + meeting.duration);
+    const end_time = start_time.toISOString();
+
+    const response = await axios.post(
+      "https://graph.microsoft.com/v1.0/me/calendar/events",
+      {
+        subject: meeting.topic,
+        body: {
+          contentType: "HTML",
+          content: meeting.agenda,
+        },
+        start: {
+          dateTime: meeting.start_time,
+          timeZone: "Pacific Standard Time",
+        },
+        end: {
+          dateTime: end_time,
+          timeZone: "Pacific Standard Time",
+        },
+        location: {
+          displayName: `Online meeting on ${meeting.topic}`,
+        },
+        attendees: [
+          {
+            emailAddress: {
+              address: meeting.candidateEmail,
+              name: meeting.candidateName,
+            },
+            type: "required",
+          },
+        ],
+        allowNewTimeProposals: true,
+        isOnlineMeeting: true,
+        onlineMeetingProvider: "teamsForBusiness",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${tokens.accessToken}`,
+          "Content-Type": "application/json",
+          Prefer: `outlook.timezone="Pacific Standard Time"`,
+        },
+      },
+    );
+    return ServiceResponse.success("Meeting generated", { teams: response.data });
+  } catch (error: any) {
+    if (error.response && error.response.status === 401) {
+      console.log("Access token expired. Refreshing token...");
+      await refreshAndRetryTeamsMeeting(meeting);
     } else {
       console.error("Error creating meeting:", error);
       return ServiceResponse.failure(
@@ -65,8 +130,8 @@ async function createMeeting(meeting: Meeting): Promise<any> {
 }
 
 // Refresh the token and retry the meeting creation
-async function refreshAndRetryMeeting(meeting: Meeting): Promise<void> {
-  const tokens = await getTokens(meeting.recruiterId);
+async function refreshAndRetryZoomMeeting(meeting: Meeting): Promise<void> {
+  const tokens = await getTokens(meeting.recruiterId, "zoomTokens");
   if (!tokens) return console.error("No valid tokens found.");
 
   try {
@@ -85,13 +150,48 @@ async function refreshAndRetryMeeting(meeting: Meeting): Promise<void> {
     const newRefreshToken = response.data.refresh_token;
 
     // Update Firestore with the new tokens
-    await updateTokens(meeting.recruiterId, newAccessToken, newRefreshToken);
+    await updateTokens(meeting.recruiterId, newAccessToken, newRefreshToken, "zoomTokens");
 
     // Retry creating the meeting with the new access token
-    await createMeeting(meeting);
+    await createZoomMeeting(meeting);
   } catch (error) {
     console.error("Error refreshing token:", error);
   }
 }
 
-export { createMeeting };
+// Refresh the token and retry the meeting creation
+async function refreshAndRetryTeamsMeeting(meeting: Meeting): Promise<void> {
+  const tokens = await getTokens(meeting.recruiterId, "teamsTokens");
+  if (!tokens) return console.error("No valid tokens found.");
+
+  try {
+    const response = await axios.post(
+      "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      {
+        grant_type: "refresh_token",
+        refresh_token: tokens.refreshToken,
+        client_secret: process.env.AZURE_CLIENT_SECRET,
+        scope: "Calendars.ReadWrite offline_access",
+        client_id: process.env.AZURE_CLIENT_ID,
+      },
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      },
+    );
+
+    const newAccessToken = response.data.access_token;
+    const newRefreshToken = response.data.refresh_token;
+
+    // Update Firestore with the new tokens
+    await updateTokens(meeting.recruiterId, newAccessToken, newRefreshToken, "teamsTokens");
+
+    // Retry creating the meeting with the new access token
+    await createTeamsMeeting(meeting);
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+  }
+}
+
+export { createZoomMeeting, createTeamsMeeting };
