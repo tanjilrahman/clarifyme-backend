@@ -6,14 +6,9 @@ export interface Meeting {
   candidateName: string;
   candidateEmail: string;
   recruiterEmail: string;
-  dateTime: string;
   recruiterId: string;
   topic: string;
-  start_time: string;
-  type: number;
-  duration: number;
   timezone: string;
-  agenda: string;
 }
 
 // Create a zoom meeting
@@ -22,33 +17,21 @@ async function createZoomMeeting(meeting: Meeting): Promise<any> {
   if (!tokens) return ServiceResponse.failure("No valid tokens found.", null);
 
   try {
-    const response = await axios.post(
-      "https://api.zoom.us/v2/users/me/meetings",
-      {
-        topic: meeting.topic,
-        type: meeting.type,
-        start_time: meeting.start_time,
-        duration: meeting.duration,
-        timezone: meeting.timezone,
-        agenda: meeting.agenda,
-        settings: {
-          host_video: true,
-          participant_video: true,
-          join_before_host: false,
-          mute_upon_entry: true,
-          watermark: false,
-          use_pmi: false,
-          approval_type: 0,
-          audio: "both",
-          auto_recording: "none",
-        },
+    const meetingData = {
+      topic: meeting.topic,
+      type: 3,
+      duration: 30,
+      timezone: meeting.timezone,
+      settings: {
+        host_video: true,
+        participant_video: true,
       },
-      {
-        headers: {
-          Authorization: `Bearer ${tokens.accessToken}`,
-        },
+    };
+    const response = await axios.post("https://api.zoom.us/v2/users/me/meetings", meetingData, {
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken}`,
       },
-    );
+    });
     return ServiceResponse.success("Meeting generated", { zoom: response.data });
   } catch (error: any) {
     if (error.response && error.response.status === 401) {
@@ -70,9 +53,8 @@ async function createTeamsMeeting(meeting: Meeting): Promise<any> {
   if (!tokens) return ServiceResponse.failure("No valid tokens found.", null);
 
   try {
-    const start_time = new Date(meeting.start_time);
-    start_time.setMinutes(start_time.getMinutes() + meeting.duration);
-    const end_time = start_time.toISOString();
+    const start_time = new Date().toISOString();
+    const end_time = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
     const response = await axios.post(
       "https://graph.microsoft.com/v1.0/me/calendar/events",
@@ -80,10 +62,10 @@ async function createTeamsMeeting(meeting: Meeting): Promise<any> {
         subject: meeting.topic,
         body: {
           contentType: "HTML",
-          content: meeting.agenda,
+          content: "Discuss job role and expectations.",
         },
         start: {
-          dateTime: meeting.start_time,
+          dateTime: start_time,
           timeZone: "Pacific Standard Time",
         },
         end: {

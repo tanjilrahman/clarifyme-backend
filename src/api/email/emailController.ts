@@ -46,21 +46,29 @@ class EmailController {
 
       const resend = new Resend(process.env.RESEND_API_KEY);
 
-      const response = await resend.emails.send({
+      const response1 = await resend.emails.send({
         from: "Clarifyme.ai <support@clarifyme.ai>",
         to: confirmAppointmentInfo.candidateEmail,
-        bcc: confirmAppointmentInfo.recruiterEmail,
         subject: `Appointment scheduled for ${confirmAppointmentInfo.topic}`,
-        react: AppointmentConfirmationEmail(confirmAppointmentInfo),
+        react: AppointmentConfirmationEmail(confirmAppointmentInfo, "candidate"),
       });
 
-      if (response.data) {
-        const serviceResponse = ServiceResponse.success("Email sent!", response.data);
-        return handleServiceResponse(serviceResponse, res);
-      } else {
-        const serviceResponse = ServiceResponse.failure("Error!", response.error);
-        return handleServiceResponse(serviceResponse, res);
-      }
+      const response2 = await resend.emails.send({
+        from: "Clarifyme.ai <support@clarifyme.ai>",
+        to: confirmAppointmentInfo.recruiterEmail,
+        subject: `Appointment scheduled with ${confirmAppointmentInfo.candidateName}`,
+        react: AppointmentConfirmationEmail(confirmAppointmentInfo, "recruiter"),
+      });
+
+      Promise.all([response1, response2])
+        .then((values) => {
+          const serviceResponse = ServiceResponse.success("Email sent!", null);
+          return handleServiceResponse(serviceResponse, res);
+        })
+        .catch((e) => {
+          const serviceResponse = ServiceResponse.failure("Error!", e.error);
+          return handleServiceResponse(serviceResponse, res);
+        });
     } catch (error) {
       const errorMessage = `Error sending email: $${(error as Error).message}`;
       logger.error(errorMessage);

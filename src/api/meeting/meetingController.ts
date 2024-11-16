@@ -1,6 +1,4 @@
-import { ServiceResponse } from "@/common/models/serviceResponse";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
-import type { ConfirmAppointmentInfo } from "@/emails/appointment-confirmation";
 import axios from "axios";
 import type { Request, RequestHandler, Response } from "express";
 import { type Meeting, createTeamsMeeting, createZoomMeeting } from "./meetingService";
@@ -12,15 +10,6 @@ class MeetingController {
 
     const serviceResponse = await createZoomMeeting(meeting);
 
-    const emailPayload: ConfirmAppointmentInfo = {
-      candidateEmail: meeting.candidateEmail,
-      candidateName: meeting.candidateName,
-      dateTime: meeting.dateTime,
-      recruiterEmail: meeting.recruiterEmail,
-      topic: meeting.topic,
-      meetingLink: serviceResponse.responseObject.zoom.join_url,
-    };
-    await axios.post(`${process.env.SERVER_URL}/email/send-confirm-appointment`, emailPayload);
     return handleServiceResponse(serviceResponse, res);
   };
 
@@ -29,15 +18,6 @@ class MeetingController {
 
     const serviceResponse = await createTeamsMeeting(meeting);
 
-    const emailPayload: ConfirmAppointmentInfo = {
-      candidateEmail: meeting.candidateEmail,
-      candidateName: meeting.candidateName,
-      dateTime: meeting.dateTime,
-      recruiterEmail: meeting.recruiterEmail,
-      topic: meeting.topic,
-      meetingLink: serviceResponse.responseObject.teams.onlineMeeting.joinUrl,
-    };
-    await axios.post(`${process.env.SERVER_URL}/email/send-confirm-appointment`, emailPayload);
     return handleServiceResponse(serviceResponse, res);
   };
 

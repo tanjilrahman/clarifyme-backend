@@ -18,11 +18,12 @@ import {
   
   export interface ConfirmAppointmentInfo {
     candidateName: string;
-    candidateEmail: string;
-    recruiterEmail: string;
-    dateTime: string;
-    meetingLink: string;
-    topic: string;
+  candidateEmail: string;
+  recruiterEmail: string;
+  dateTimeCandidate: string;
+  dateTimeRecuriter: string;
+  meetingLink: string;
+  topic: string;
 }
   
   const baseUrl = 'https://dashboard.clarifyme.ai'
@@ -31,12 +32,13 @@ import {
     candidateName,
     candidateEmail,
     recruiterEmail,
-    dateTime,
+    dateTimeCandidate,
+    dateTimeRecuriter,
     topic,
     meetingLink,
-  }: ConfirmAppointmentInfo) => {
+  }: ConfirmAppointmentInfo, type: "candidate" | "recruiter") => {
     const previewText = `You got an Appointment!`;
-  
+    const dateTime = type === "candidate" ? dateTimeCandidate : dateTimeRecuriter
     return (
       <Html>
         <Head />
@@ -57,10 +59,10 @@ import {
               Appointment <strong>Scheduled!</strong>
               </Heading>
               <Text className="text-black text-[14px] leading-[24px]">
-                Hello {candidateName},
+                {type === "candidate" ? `Hello ${candidateName},` : "Hi,"}
               </Text>
               <Text className="text-black text-[14px] leading-[24px]">
-                You're appointment for <strong>{topic}</strong> is scheduled at <strong>{dateTime}</strong>. Please be on time on the below meeting link.
+                You're appointment for <strong>{topic}</strong> {type === "recruiter" && `with ${candidateName}`} is scheduled at <strong>{dateTime}</strong>. Please be on time on the below meeting link.
               </Text>
               <Section className="text-center mt-[32px] mb-[32px]">
                 <Button
@@ -76,17 +78,6 @@ import {
                   {meetingLink}
                 </Link>
               </Text>
-              {/* <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
-              <Text className="text-[#666666] text-[12px] leading-[24px]">
-                This invitation was intended for{" "}
-                <span className="text-black">{username}</span>. This invite was
-                sent from <span className="text-black">{inviteFromIp}</span>{" "}
-                located in{" "}
-                <span className="text-black">{inviteFromLocation}</span>. If you
-                were not expecting this invitation, you can ignore this email. If
-                you are concerned about your account's safety, please reply to
-                this email to get in touch with us.
-              </Text> */}
             </Container>
           </Body>
         </Tailwind>
