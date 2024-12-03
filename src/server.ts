@@ -12,6 +12,7 @@ import requestLogger from "@/common/middleware/requestLogger";
 import { env } from "@/common/utils/envConfig";
 import { emailRouter } from "./api/email/emailRouter";
 import { meetingRouter } from "./api/meeting/meetingRouter";
+import { stripeRouter } from "./api/stripe/stripeRouter";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
@@ -20,7 +21,13 @@ const app: Express = express();
 app.set("trust proxy", true);
 
 // Middlewares
-app.use(express.json());
+app.use((req, res, next) => {
+  if (req.path === "/stripe/webhook") {
+    next(); // Skip JSON parsing for Stripe webhook
+  } else {
+    express.json()(req, res, next); // Use JSON parsing for all other routes
+  }
+});
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(helmet());
@@ -34,6 +41,7 @@ app.use("/health-check", healthCheckRouter);
 app.use("/users", userRouter);
 app.use("/meeting", meetingRouter);
 app.use("/email", emailRouter);
+app.use("/stripe", stripeRouter);
 
 // Swagger UI
 app.use(openAPIRouter);
