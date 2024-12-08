@@ -1,4 +1,5 @@
 import { db } from "@/firebase";
+import axios from "axios";
 import { firestore } from "firebase-admin";
 
 export interface DBUser {
@@ -184,6 +185,12 @@ export const addAccessEmail = async (
         { merge: true },
       );
 
+    await axios.post("https://api.clarifyme.ai/email/invitation", {
+      userEmail: accessUserData.email,
+      userName: accessUserData.name,
+      adminEmail: adminData.email,
+      adminName: adminData.name,
+    });
     return { success: true, message: "Access email successfully added." };
   } catch (error) {
     console.error("Error adding access email:", error);
