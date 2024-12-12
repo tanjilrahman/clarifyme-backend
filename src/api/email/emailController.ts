@@ -92,7 +92,7 @@ class EmailController {
       const response = await resend.emails.send({
         from: "Clarifyme.ai <support@clarifyme.ai>",
         to: subscriptionInfo.adminEmail,
-        subject: "Subscription Started!",
+        subject: `Subscription ${subscriptionInfo.subscriptionType}!`,
         react: SubscriptionEmail(subscriptionInfo),
       });
 

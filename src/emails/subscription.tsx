@@ -18,7 +18,7 @@ import {
 
 export interface SubscriptionInfo {
   adminEmail: string;
-  subscriptionType: string;
+  subscriptionType: 'Started' | 'Canceled';
 }
 
 const baseUrl = 'https://dashboard.clarifyme.ai';
@@ -48,25 +48,23 @@ export const SubscriptionEmail = ({
               />
             </Section>
             <Heading className="text-black text-[24px] font-normal text-center p-0 my-[30px] mx-0">
-              Subscription <strong>Started!</strong>
+              Subscription <strong>{subscriptionType}!</strong>
             </Heading>
             <Text className="text-black text-[14px] leading-[24px]">Hi!</Text>
             <Text className="text-black text-[14px] leading-[24px]">
-              You're <strong>{subscriptionType}</strong> subscription for the
-              account <strong>{adminEmail}</strong> has been started!
+              You're subscription for the account <strong>{adminEmail}</strong>{' '}
+              has been {subscriptionType}!
             </Text>
-            <Text className="text-black text-[14px] leading-[24px]">
-              Trial expires at{' '}
-              <strong>{futureDate.toLocaleDateString()}.</strong>
-            </Text>
-            <Section className="text-center mt-[32px] mb-[32px]">
-              <Button
-                className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3"
-                href={`${baseUrl}/manage`}
-              >
-                Go to Dashboard
-              </Button>
-            </Section>
+            {subscriptionType === 'Started' && (
+              <Section className="text-center mt-[32px] mb-[32px]">
+                <Button
+                  className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3"
+                  href={`${baseUrl}/manage`}
+                >
+                  View Subscription
+                </Button>
+              </Section>
+            )}
           </Container>
         </Body>
       </Tailwind>

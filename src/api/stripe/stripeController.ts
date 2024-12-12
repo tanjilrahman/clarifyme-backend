@@ -120,9 +120,9 @@ class StripeController {
             accessEmails: null,
           });
 
-          await axios.post("http://localhost:8080/email/subscription", {
+          await axios.post("https://api.clarifyme.ai/email/subscription", {
             adminEmail: data.customer_email,
-            subscriptionType: "trial",
+            subscriptionType: "Started",
           });
           console.log("User subscription activated after checkout.");
         }
@@ -133,6 +133,11 @@ class StripeController {
         await updateUserBySubscriptionId(data.subscription, {
           status: "active",
           lastPaymentDate: new Date(),
+        });
+
+        await axios.post("https://api.clarifyme.ai/email/subscription", {
+          adminEmail: data.customer_email,
+          subscriptionType: "Started",
         });
         console.log("User subscription renewed after payment.");
         break;
@@ -232,6 +237,11 @@ class StripeController {
 
           // Update managed accounts in batches
           await updateManagedAccounts(adminUpdate, managedEmails, null);
+
+          await axios.post("https://api.clarifyme.ai/email/subscription", {
+            adminEmail: data.customer_email,
+            subscriptionType: "Canceled",
+          });
           console.log("Managed accounts canceled successfully.");
         } catch (error) {
           console.error("Error canceling subscription:", error);
