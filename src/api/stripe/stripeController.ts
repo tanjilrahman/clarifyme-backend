@@ -119,6 +119,11 @@ class StripeController {
             subscriptionAdmin: data.customer_email,
             accessEmails: null,
           });
+
+          await axios.post("http://localhost:8080/email/subscription", {
+            adminEmail: data.customer_email,
+            subscriptionType: "trial",
+          });
           console.log("User subscription activated after checkout.");
         }
         break;
