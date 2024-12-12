@@ -120,10 +120,6 @@ class StripeController {
             accessEmails: null,
           });
 
-          await axios.post("https://api.clarifyme.ai/email/subscription", {
-            adminEmail: data.customer_email,
-            subscriptionType: "Started",
-          });
           console.log("User subscription activated after checkout.");
         }
         break;
